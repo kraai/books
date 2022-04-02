@@ -16,6 +16,4 @@
 // License along with book.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-fn main() {
-    println!("Hello, world!");
-}
+fn main() {}
