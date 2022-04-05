@@ -23,3 +23,6 @@ edition = "2021"
 license = "AGPL-3.0-or-later"
 
 [dependencies]
+clap = { version = "3", features = ["derive"] }
+directories = "4"
+rusqlite = "0.27"
