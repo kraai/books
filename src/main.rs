@@ -28,6 +28,9 @@ enum Options {
         #[clap(name = "AUTHOR", required = true)]
         authors: Vec<String>,
     },
+    Read {
+        title: String,
+    },
     Render {
         #[clap(long)]
         complete: bool,
@@ -102,6 +105,17 @@ fn main() {
                 eprintln!("books: unable to commit transaction: {}", e);
                 process::exit(1);
             });
+        }
+        Options::Read { title } => {
+            connection
+                .execute(
+                    "UPDATE book SET completion_date = date('now','localtime') WHERE title = ?",
+                    [title],
+                )
+                .unwrap_or_else(|e| {
+                    eprintln!("books: unable to prepare statement: {}", e);
+                    process::exit(1);
+                });
         }
         Options::Render { complete } => {
             let statement = if complete {
