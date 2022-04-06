@@ -107,15 +107,20 @@ fn main() {
             });
         }
         Options::Read { title } => {
-            connection
+            if connection
                 .execute(
                     "UPDATE book SET completion_date = date('now','localtime') WHERE title = ?",
-                    [title],
+                    [&title],
                 )
                 .unwrap_or_else(|e| {
                     eprintln!("books: unable to execute statement: {}", e);
                     process::exit(1);
-                });
+                })
+                != 1
+            {
+                eprintln!("books: not found: {}", title);
+                process::exit(1);
+            }
         }
         Options::Render { complete } => {
             let statement = if complete {
