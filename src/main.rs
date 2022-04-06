@@ -25,7 +25,7 @@ use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt, process};
 enum Options {
     Add {
         title: String,
-        #[clap(name = "author", required = true)]
+        #[clap(name = "AUTHOR", required = true)]
         authors: Vec<String>,
     },
     Render {
