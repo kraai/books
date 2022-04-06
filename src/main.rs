@@ -56,7 +56,7 @@ fn main() {
     });
     connection
         .execute_batch(
-            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completed TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
+            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completion_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
         .unwrap_or_else(|e| {
             eprintln!("books: unable to prepare statement: {}", e);
