@@ -113,7 +113,7 @@ fn main() {
                     [title],
                 )
                 .unwrap_or_else(|e| {
-                    eprintln!("books: unable to prepare statement: {}", e);
+                    eprintln!("books: unable to execute statement: {}", e);
                     process::exit(1);
                 });
         }
