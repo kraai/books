@@ -31,6 +31,11 @@ enum Options {
     Read {
         title: String,
     },
+    #[clap(name = "mv")]
+    Rename {
+        old_title: String,
+        new_title: String,
+    },
     Render {
         #[clap(long)]
         complete: bool,
@@ -119,6 +124,25 @@ fn main() {
                 != 1
             {
                 eprintln!("books: not found: {}", title);
+                process::exit(1);
+            }
+        }
+        Options::Rename {
+            old_title,
+            new_title,
+        } => {
+            if connection
+                .execute(
+                    "UPDATE book SET title = ? WHERE title = ?",
+                    [&new_title, &old_title],
+                )
+                .unwrap_or_else(|e| {
+                    eprintln!("books: unable to execute statement: {}", e);
+                    process::exit(1);
+                })
+                != 1
+            {
+                eprintln!("books: not found: {}", old_title);
                 process::exit(1);
             }
         }
