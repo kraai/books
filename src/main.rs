@@ -229,5 +229,6 @@ fn update_website() {
         .success()
     {
         eprintln!("books: make failed");
+        process::exit(1);
     }
 }
