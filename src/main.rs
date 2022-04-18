@@ -47,57 +47,61 @@ enum Options {
 }
 
 macro_rules! die {
-    ($($arg:tt)*) => ({
-	eprintln!($($arg)*);
+    ($fmt:expr) => ({
+	eprintln!(concat!("books: ", $fmt));
 	process::exit(1);
-    })
+    });
+    ($fmt:expr, $($arg:tt)*) => ({
+	eprintln!(concat!("books: ", $fmt), $($arg)*);
+	process::exit(1);
+    });
 }
 
 fn main() {
     let options = Options::parse();
     let project_dirs = ProjectDirs::from("org.ftbfs", "", "books")
-        .unwrap_or_else(|| die!("books: cannot determine home directory"));
+        .unwrap_or_else(|| die!("cannot determine home directory"));
     let data_dir = project_dirs.data_dir();
     DirBuilder::new()
         .mode(0o700)
         .recursive(true)
         .create(data_dir)
-        .unwrap_or_else(|e| die!("books: cannot create {}: {}", data_dir.display(), e));
+        .unwrap_or_else(|e| die!("cannot create {}: {}", data_dir.display(), e));
     let database = data_dir.join("database.sqlite3");
     let mut connection = Connection::open(&database)
-        .unwrap_or_else(|e| die!("books: cannot open {}: {}", database.display(), e));
+        .unwrap_or_else(|e| die!("cannot open {}: {}", database.display(), e));
     connection
         .execute_batch(
             "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completion_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
-        .unwrap_or_else(|e| die!("books: cannot prepare statement: {}", e));
+        .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
     connection
         .pragma_update(None, "FOREIGN_KEYS", 1)
-        .unwrap_or_else(|e| die!("books: cannot enable foreign key constraints: {}", e));
+        .unwrap_or_else(|e| die!("cannot enable foreign key constraints: {}", e));
     match options {
         Options::Add { title, authors } => {
             let transaction = connection
                 .transaction()
-                .unwrap_or_else(|e| die!("books: cannot create transaction: {}", e));
+                .unwrap_or_else(|e| die!("cannot create transaction: {}", e));
             {
                 let mut statement = transaction
                     .prepare("INSERT INTO book (title) VALUES (?)")
-                    .unwrap_or_else(|e| die!("books: cannot prepare statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
                 statement
                     .execute([&title])
-                    .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
             }
             for author in authors {
                 let mut statement = transaction
                     .prepare("INSERT INTO author VALUES (?, ?)")
-                    .unwrap_or_else(|e| die!("books: cannot prepare statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
                 statement
                     .execute([&title, &author])
-                    .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
             }
             transaction
                 .commit()
-                .unwrap_or_else(|e| die!("books: cannot commit transaction: {}", e));
+                .unwrap_or_else(|e| die!("cannot commit transaction: {}", e));
             update_website();
         }
         Options::Read { title } => {
@@ -106,10 +110,10 @@ fn main() {
                     "UPDATE book SET completion_date = date('now','localtime') WHERE title = ?",
                     [&title],
                 )
-                .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e))
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
                 != 1
             {
-                die!("books: not found: {}", title);
+                die!("not found: {}", title);
             }
             update_website();
         }
@@ -122,10 +126,10 @@ fn main() {
                     "UPDATE book SET title = ? WHERE title = ?",
                     [&new_title, &old_title],
                 )
-                .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e))
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
                 != 1
             {
-                die!("books: not found: {}", old_title);
+                die!("not found: {}", old_title);
             }
             update_website();
         }
@@ -137,27 +141,27 @@ fn main() {
             };
             let mut statement = connection
                 .prepare(statement)
-                .unwrap_or_else(|e| die!("books: cannot prepare statement: {}", e));
+                .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
             let mut rows = statement
                 .query([])
-                .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
             while let Some(row) = rows
                 .next()
-                .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e))
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
             {
                 let title: String = row
                     .get(0)
-                    .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
                 let mut statement = connection
                     .prepare("SELECT author FROM author WHERE title = ? ORDER BY author")
-                    .unwrap_or_else(|e| die!("books: cannot prepare statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
                 let rows = statement
                     .query_map([&title], |row| row.get(0))
-                    .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
                 let mut authors = Vec::new();
                 for row in rows {
                     let author: String =
-                        row.unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                        row.unwrap_or_else(|e| die!("cannot execute statement: {}", e));
                     authors.push(author);
                 }
                 let authors = match authors.len() {
@@ -169,7 +173,7 @@ fn main() {
                 if complete {
                     let completion_date: String = row
                         .get(1)
-                        .unwrap_or_else(|e| die!("books: cannot execute statement: {}", e));
+                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
                     println!(
                         "      <li><em>{}</em> by {} on {}</li>",
                         title, authors, completion_date
@@ -186,9 +190,9 @@ fn update_website() {
     if !Command::new("make")
         .args(["-C", "/home/kraai/src/ftbfs.org"])
         .status()
-        .unwrap_or_else(|e| die!("books: cannot run make: {}", e))
+        .unwrap_or_else(|e| die!("cannot run make: {}", e))
         .success()
     {
-        die!("books: make failed");
+        die!("make failed");
     }
 }
