@@ -49,7 +49,7 @@ enum Options {
 fn main() {
     let options = Options::parse();
     let project_dirs = ProjectDirs::from("org.ftbfs", "", "books").unwrap_or_else(|| {
-        eprintln!("books: unable to determine home directory");
+        eprintln!("books: cannot determine home directory");
         process::exit(1);
     });
     let data_dir = project_dirs.data_dir();
@@ -58,12 +58,12 @@ fn main() {
         .recursive(true)
         .create(data_dir)
         .unwrap_or_else(|e| {
-            eprintln!("books: unable to create {}: {}", data_dir.display(), e);
+            eprintln!("books: cannot create {}: {}", data_dir.display(), e);
             process::exit(1);
         });
     let database = data_dir.join("database.sqlite3");
     let mut connection = Connection::open(&database).unwrap_or_else(|e| {
-        eprintln!("books: unable to open {}: {}", database.display(), e);
+        eprintln!("books: cannot open {}: {}", database.display(), e);
         process::exit(1);
     });
     connection
@@ -71,30 +71,30 @@ fn main() {
             "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completion_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
         .unwrap_or_else(|e| {
-            eprintln!("books: unable to prepare statement: {}", e);
+            eprintln!("books: cannot prepare statement: {}", e);
             process::exit(1);
         });
     connection
         .pragma_update(None, "FOREIGN_KEYS", 1)
         .unwrap_or_else(|e| {
-            eprintln!("books: unable to enable foreign key constraints: {}", e);
+            eprintln!("books: cannot enable foreign key constraints: {}", e);
             process::exit(1);
         });
     match options {
         Options::Add { title, authors } => {
             let transaction = connection.transaction().unwrap_or_else(|e| {
-                eprintln!("books: unable to create transaction: {}", e);
+                eprintln!("books: cannot create transaction: {}", e);
                 process::exit(1);
             });
             {
                 let mut statement = transaction
                     .prepare("INSERT INTO book (title) VALUES (?)")
                     .unwrap_or_else(|e| {
-                        eprintln!("books: unable to prepare statement: {}", e);
+                        eprintln!("books: cannot prepare statement: {}", e);
                         process::exit(1);
                     });
                 statement.execute([&title]).unwrap_or_else(|e| {
-                    eprintln!("books: unable to execute statement: {}", e);
+                    eprintln!("books: cannot execute statement: {}", e);
                     process::exit(1);
                 });
             }
@@ -102,16 +102,16 @@ fn main() {
                 let mut statement = transaction
                     .prepare("INSERT INTO author VALUES (?, ?)")
                     .unwrap_or_else(|e| {
-                        eprintln!("books: unable to prepare statement: {}", e);
+                        eprintln!("books: cannot prepare statement: {}", e);
                         process::exit(1);
                     });
                 statement.execute([&title, &author]).unwrap_or_else(|e| {
-                    eprintln!("books: unable to execute statement: {}", e);
+                    eprintln!("books: cannot execute statement: {}", e);
                     process::exit(1);
                 });
             }
             transaction.commit().unwrap_or_else(|e| {
-                eprintln!("books: unable to commit transaction: {}", e);
+                eprintln!("books: cannot commit transaction: {}", e);
                 process::exit(1);
             });
             update_website();
@@ -123,7 +123,7 @@ fn main() {
                     [&title],
                 )
                 .unwrap_or_else(|e| {
-                    eprintln!("books: unable to execute statement: {}", e);
+                    eprintln!("books: cannot execute statement: {}", e);
                     process::exit(1);
                 })
                 != 1
@@ -143,7 +143,7 @@ fn main() {
                     [&new_title, &old_title],
                 )
                 .unwrap_or_else(|e| {
-                    eprintln!("books: unable to execute statement: {}", e);
+                    eprintln!("books: cannot execute statement: {}", e);
                     process::exit(1);
                 })
                 != 1
@@ -160,37 +160,37 @@ fn main() {
                 "SELECT title FROM book WHERE completion_date IS NULL ORDER BY title"
             };
             let mut statement = connection.prepare(statement).unwrap_or_else(|e| {
-                eprintln!("books: unable to prepare statement: {}", e);
+                eprintln!("books: cannot prepare statement: {}", e);
                 process::exit(1);
             });
             let mut rows = statement.query([]).unwrap_or_else(|e| {
-                eprintln!("books: unable to execute statement: {}", e);
+                eprintln!("books: cannot execute statement: {}", e);
                 process::exit(1);
             });
             while let Some(row) = rows.next().unwrap_or_else(|e| {
-                eprintln!("books: unable to execute statement: {}", e);
+                eprintln!("books: cannot execute statement: {}", e);
                 process::exit(1);
             }) {
                 let title: String = row.get(0).unwrap_or_else(|e| {
-                    eprintln!("books: unable to execute statement: {}", e);
+                    eprintln!("books: cannot execute statement: {}", e);
                     process::exit(1);
                 });
                 let mut statement = connection
                     .prepare("SELECT author FROM author WHERE title = ? ORDER BY author")
                     .unwrap_or_else(|e| {
-                        eprintln!("books: unable to prepare statement: {}", e);
+                        eprintln!("books: cannot prepare statement: {}", e);
                         process::exit(1);
                     });
                 let rows = statement
                     .query_map([&title], |row| row.get(0))
                     .unwrap_or_else(|e| {
-                        eprintln!("books: unable to execute statement: {}", e);
+                        eprintln!("books: cannot execute statement: {}", e);
                         process::exit(1);
                     });
                 let mut authors = Vec::new();
                 for row in rows {
                     let author: String = row.unwrap_or_else(|e| {
-                        eprintln!("books: unable to execute statement: {}", e);
+                        eprintln!("books: cannot execute statement: {}", e);
                         process::exit(1);
                     });
                     authors.push(author);
@@ -203,7 +203,7 @@ fn main() {
                 };
                 if complete {
                     let completion_date: String = row.get(1).unwrap_or_else(|e| {
-                        eprintln!("books: unable to execute statement: {}", e);
+                        eprintln!("books: cannot execute statement: {}", e);
                         process::exit(1);
                     });
                     println!(
