@@ -74,7 +74,7 @@ fn main() {
         .execute_batch(
             "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completion_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
-        .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
+        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
     connection
         .pragma_update(None, "FOREIGN_KEYS", 1)
         .unwrap_or_else(|e| die!("cannot enable foreign key constraints: {}", e));
