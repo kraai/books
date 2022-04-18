@@ -19,7 +19,11 @@
 use clap::Parser;
 use directories::ProjectDirs;
 use rusqlite::Connection;
-use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt, process};
+use std::{
+    fs::DirBuilder,
+    os::unix::fs::DirBuilderExt,
+    process::{self, Command},
+};
 
 #[derive(Parser)]
 enum Options {
@@ -110,6 +114,7 @@ fn main() {
                 eprintln!("books: unable to commit transaction: {}", e);
                 process::exit(1);
             });
+            update_website();
         }
         Options::Read { title } => {
             if connection
@@ -126,6 +131,7 @@ fn main() {
                 eprintln!("books: not found: {}", title);
                 process::exit(1);
             }
+            update_website();
         }
         Options::Rename {
             old_title,
@@ -145,6 +151,7 @@ fn main() {
                 eprintln!("books: not found: {}", old_title);
                 process::exit(1);
             }
+            update_website();
         }
         Options::Render { complete } => {
             let statement = if complete {
@@ -208,5 +215,19 @@ fn main() {
                 }
             }
         }
+    }
+}
+
+fn update_website() {
+    if !Command::new("make")
+        .args(["-C", "/home/kraai/src/ftbfs.org"])
+        .status()
+        .unwrap_or_else(|e| {
+            eprintln!("books: cannot run make: {}", e);
+            process::exit(1);
+        })
+        .success()
+    {
+        eprintln!("books: make failed");
     }
 }
