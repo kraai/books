@@ -27,20 +27,30 @@ use std::{
 
 #[derive(Parser)]
 enum Options {
+    /// Add a book
     Add {
+        /// Title of the book
         title: String,
+        /// Authors of the book
         #[clap(name = "AUTHOR", required = true)]
         authors: Vec<String>,
     },
+    /// Read a book
     Read {
+        /// Title of the book
         title: String,
     },
+    /// Change a book's title
     #[clap(name = "mv")]
     Rename {
+        /// Old title of the book
         old_title: String,
+        /// New title of the book
         new_title: String,
     },
+    /// Render the list of books
     Render {
+        /// Render completed books
         #[clap(long)]
         complete: bool,
     },
