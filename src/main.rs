@@ -24,6 +24,7 @@ use std::{
     os::unix::fs::DirBuilderExt,
     process::{self, Command},
 };
+use time::{format_description, Date};
 
 #[derive(Parser)]
 enum Options {
@@ -184,9 +185,27 @@ fn main() {
                     let completion_date: String = row
                         .get(1)
                         .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                    let completion_date = Date::parse(
+                        &completion_date,
+                        &format_description::parse("[year]-[month]-[day]").unwrap(),
+                    )
+                    .unwrap_or_else(|e| die!("cannot parse completion date for {}: {}", title, e));
                     println!(
-                        "      <li><em>{}</em> by {} on {}</li>",
-                        title, authors, completion_date
+                        "      <li><em>{}</em> by {}, finished on {}</li>",
+                        title,
+                        authors,
+                        completion_date
+                            .format(
+                                &format_description::parse(
+                                    "[month repr:long] [day padding:none], [year padding:none]"
+                                )
+                                .unwrap()
+                            )
+                            .unwrap_or_else(|e| die!(
+                                "cannot format completion date for {}: {}",
+                                title,
+                                e
+                            ))
                     );
                 } else {
                     println!("      <li><em>{}</em> by {}</li>", title, authors);
