@@ -24,7 +24,6 @@ use std::{
     os::unix::fs::DirBuilderExt,
     process::{self, Command},
 };
-use time::{format_description, Date};
 
 #[derive(Parser)]
 enum Options {
@@ -36,8 +35,8 @@ enum Options {
         #[clap(name = "AUTHOR", required = true)]
         authors: Vec<String>,
     },
-    /// Read a book
-    Read {
+    /// Finish reading a book
+    Finish {
         /// Title of the book
         title: String,
     },
@@ -49,11 +48,10 @@ enum Options {
         /// New title of the book
         new_title: String,
     },
-    /// Render the list of books
-    Render {
-        /// Render completed books
-        #[clap(long)]
-        complete: bool,
+    /// Start reading a book
+    Start {
+        /// Title of the book
+        title: String,
     },
 }
 
@@ -83,7 +81,7 @@ fn main() {
         .unwrap_or_else(|e| die!("cannot open {}: {}", database.display(), e));
     connection
         .execute_batch(
-            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, completion_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
+            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, start_date TEXT, end_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
         .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
     connection
@@ -115,10 +113,10 @@ fn main() {
                 .unwrap_or_else(|e| die!("cannot commit transaction: {}", e));
             update_website();
         }
-        Options::Read { title } => {
+        Options::Finish { title } => {
             if connection
                 .execute(
-                    "UPDATE book SET completion_date = date('now','localtime') WHERE title = ?",
+                    "UPDATE book SET end_date = date('now','localtime') WHERE title = ?",
                     [&title],
                 )
                 .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
@@ -144,73 +142,18 @@ fn main() {
             }
             update_website();
         }
-        Options::Render { complete } => {
-            let statement = if complete {
-                "SELECT * FROM book WHERE completion_date IS NOT NULL ORDER BY completion_date DESC"
-            } else {
-                "SELECT title FROM book WHERE completion_date IS NULL ORDER BY title"
-            };
-            let mut statement = connection
-                .prepare(statement)
-                .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
-            let mut rows = statement
-                .query([])
-                .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-            while let Some(row) = rows
-                .next()
+        Options::Start { title } => {
+            if connection
+                .execute(
+                    "UPDATE book SET start_date = date('now','localtime') WHERE title = ?",
+                    [&title],
+                )
                 .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+                != 1
             {
-                let title: String = row
-                    .get(0)
-                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-                let mut statement = connection
-                    .prepare("SELECT author FROM author WHERE title = ? ORDER BY author")
-                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
-                let rows = statement
-                    .query_map([&title], |row| row.get(0))
-                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-                let mut authors = Vec::new();
-                for row in rows {
-                    let author: String =
-                        row.unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-                    authors.push(author);
-                }
-                let authors = match authors.len() {
-                    1 => authors[0].clone(),
-                    2 => format!("{} and {}", authors[0], authors[1]),
-                    3 => format!("{}, {}, and {}", authors[0], authors[1], authors[2]),
-                    _ => unimplemented!(),
-                };
-                if complete {
-                    let completion_date: String = row
-                        .get(1)
-                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-                    let completion_date = Date::parse(
-                        &completion_date,
-                        &format_description::parse("[year]-[month]-[day]").unwrap(),
-                    )
-                    .unwrap_or_else(|e| die!("cannot parse completion date for {}: {}", title, e));
-                    println!(
-                        "      <li><em>{}</em> by {}, finished on {}</li>",
-                        title,
-                        authors,
-                        completion_date
-                            .format(
-                                &format_description::parse(
-                                    "[month repr:long] [day padding:none], [year padding:none]"
-                                )
-                                .unwrap()
-                            )
-                            .unwrap_or_else(|e| die!(
-                                "cannot format completion date for {}: {}",
-                                title,
-                                e
-                            ))
-                    );
-                } else {
-                    println!("      <li><em>{}</em> by {}</li>", title, authors);
-                }
+                die!("not found: {}", title);
             }
+            update_website();
         }
     }
 }

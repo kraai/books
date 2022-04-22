@@ -26,4 +26,3 @@ license = "AGPL-3.0-or-later"
 clap = { version = "3", features = ["derive"] }
 directories = "4"
 rusqlite = "0.27"
-time = { version = "0.3", features = ["formatting", "parsing"] }
