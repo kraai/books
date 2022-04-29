@@ -40,6 +40,9 @@ enum Options {
         /// Title of the book
         title: String,
     },
+    /// List books
+    #[clap(name = "ls")]
+    List,
     /// Change a book's title
     #[clap(name = "mv")]
     Rename {
@@ -125,6 +128,24 @@ fn main() {
                 die!("not found: {}", title);
             }
             update_website();
+        }
+        Options::List => {
+            let statement = "SELECT title FROM book WHERE start_date is NULL ORDER BY title";
+            let mut statement = connection
+                .prepare(statement)
+                .unwrap_or_else(|e| die!("cannot prepare statement \"{}\": {}", statement, e));
+            let mut rows = statement
+                .query([])
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+            while let Some(row) = rows
+                .next()
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+            {
+                let title: String = row
+                    .get(0)
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                println!("{}", title);
+            }
         }
         Options::Rename {
             old_title,
