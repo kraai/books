@@ -84,7 +84,7 @@ fn main() {
         .unwrap_or_else(|e| die!("cannot open {}: {}", database.display(), e));
     connection
         .execute_batch(
-            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, start_date TEXT, end_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
+            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, url TEXT, start_date TEXT, end_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
         )
         .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
     connection
