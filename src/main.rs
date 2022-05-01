@@ -114,7 +114,6 @@ fn main() {
             transaction
                 .commit()
                 .unwrap_or_else(|e| die!("cannot commit transaction: {}", e));
-            update_website();
         }
         Options::Finish { title } => {
             if connection
@@ -127,7 +126,6 @@ fn main() {
             {
                 die!("not found: {}", title);
             }
-            update_website();
         }
         Options::List => {
             let statement = "SELECT title FROM book WHERE start_date is NULL ORDER BY title";
@@ -161,7 +159,6 @@ fn main() {
             {
                 die!("not found: {}", old_title);
             }
-            update_website();
         }
         Options::Start { title } => {
             if connection
@@ -174,18 +171,6 @@ fn main() {
             {
                 die!("not found: {}", title);
             }
-            update_website();
         }
-    }
-}
-
-fn update_website() {
-    if !Command::new("make")
-        .args(["-C", "/home/kraai/src/ftbfs.org"])
-        .status()
-        .unwrap_or_else(|e| die!("cannot run make: {}", e))
-        .success()
-    {
-        die!("make failed");
     }
 }
