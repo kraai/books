@@ -19,11 +19,7 @@
 use clap::Parser;
 use directories::ProjectDirs;
 use rusqlite::Connection;
-use std::{
-    fs::DirBuilder,
-    os::unix::fs::DirBuilderExt,
-    process::{self, Command},
-};
+use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt, process};
 
 #[derive(Parser)]
 enum Options {
