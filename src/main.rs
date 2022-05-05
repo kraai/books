@@ -124,7 +124,7 @@ fn main() {
             }
         }
         Options::List => {
-            let statement = "SELECT title FROM book WHERE start_date is NULL ORDER BY title";
+            let statement = "SELECT title FROM book ORDER BY title";
             let mut statement = connection
                 .prepare(statement)
                 .unwrap_or_else(|e| die!("cannot prepare statement \"{}\": {}", statement, e));
