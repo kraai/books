@@ -38,7 +38,14 @@ enum Options {
     },
     /// List books
     #[clap(name = "ls")]
-    List,
+    List {
+        /// List finished books instead of unstarted ones
+        #[clap(long)]
+        finished: bool,
+        /// List started books instead of unstarted ones
+        #[clap(long)]
+        started: bool,
+    },
     /// Change a book's title
     #[clap(name = "mv")]
     Rename {
@@ -123,8 +130,14 @@ fn main() {
                 die!("not found: {}", title);
             }
         }
-        Options::List => {
-            let statement = "SELECT title FROM book ORDER BY title";
+        Options::List { finished, started } => {
+            let statement = if finished {
+                "SELECT title FROM book WHERE end_date IS NOT NULL ORDER BY end_date"
+            } else if started {
+                "SELECT title FROM book WHERE start_date IS NOT NULL AND end_date IS NULL ORDER BY title"
+            } else {
+                "SELECT title FROM book WHERE start_date IS NULL ORDER BY title"
+            };
             let mut statement = connection
                 .prepare(statement)
                 .unwrap_or_else(|e| die!("cannot prepare statement \"{}\": {}", statement, e));
