@@ -18,6 +18,7 @@
 
 use clap::Parser;
 use directories::ProjectDirs;
+use pager::Pager;
 use rusqlite::Connection;
 use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt, process};
 
@@ -131,6 +132,7 @@ fn main() {
             }
         }
         Options::List { finished, started } => {
+            Pager::new().setup();
             let statement = if finished {
                 "SELECT title FROM book WHERE end_date IS NOT NULL ORDER BY end_date"
             } else if started {
