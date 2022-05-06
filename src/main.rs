@@ -58,6 +58,14 @@ enum Options {
         /// New title of the book
         new_title: String,
     },
+    /// Set a book's URL
+    #[clap(name = "set-url")]
+    SetUrl {
+        /// Title of the book
+        title: String,
+        /// URL of the book
+        url: String,
+    },
     /// Start reading a book
     Start {
         /// Title of the book
@@ -183,6 +191,15 @@ fn main() {
                 != 1
             {
                 die!("not found: {}", old_title);
+            }
+        }
+        Options::SetUrl { title, url } => {
+            if connection
+                .execute("UPDATE book SET url = ? WHERE title = ?", [&url, &title])
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+                != 1
+            {
+                die!("not found: {}", title);
             }
         }
         Options::Start { title } => {
