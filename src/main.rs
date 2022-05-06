@@ -87,9 +87,7 @@ fn main() {
     let mut connection = Connection::open(&database)
         .unwrap_or_else(|e| die!("cannot open {}: {}", database.display(), e));
     connection
-        .execute_batch(
-            "CREATE TABLE IF NOT EXISTS book (title TEXT PRIMARY KEY, url TEXT, start_date TEXT, end_date TEXT) STRICT; CREATE TABLE IF NOT EXISTS author (title TEXT NOT NULL REFERENCES book (title) ON DELETE CASCADE ON UPDATE CASCADE, author TEXT NOT NULL, PRIMARY KEY (title, author)) STRICT;",
-        )
+        .execute_batch(include_str!("schema.sql"))
         .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
     connection
         .pragma_update(None, "FOREIGN_KEYS", 1)
