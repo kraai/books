@@ -49,6 +49,9 @@ enum Options {
         /// List started books instead of unstarted ones
         #[clap(long)]
         started: bool,
+        /// List books with no URL
+        #[clap(long)]
+        without_url: bool,
     },
     /// Change a book's title
     #[clap(name = "mv")]
@@ -153,12 +156,18 @@ fn main() {
                 die!("not found: {}", title);
             }
         }
-        Options::List { finished, started } => {
+        Options::List {
+            finished,
+            started,
+            without_url,
+        } => {
             Pager::new().setup();
             let statement = if finished {
                 "SELECT title FROM book WHERE end_date IS NOT NULL ORDER BY end_date"
             } else if started {
                 "SELECT title FROM book WHERE start_date IS NOT NULL AND end_date IS NULL ORDER BY title"
+            } else if without_url {
+                "SELECT title FROM book WHERE url IS NULL ORDER BY title"
             } else {
                 "SELECT title FROM book WHERE start_date IS NULL ORDER BY title"
             };
