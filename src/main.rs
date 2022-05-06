@@ -31,6 +31,9 @@ enum Options {
         /// Authors of the book
         #[clap(name = "AUTHOR", required = true)]
         authors: Vec<String>,
+        /// URL of the book
+        #[clap(long)]
+        url: Option<String>,
     },
     /// Finish reading a book
     Finish {
@@ -93,17 +96,30 @@ fn main() {
         .pragma_update(None, "FOREIGN_KEYS", 1)
         .unwrap_or_else(|e| die!("cannot enable foreign key constraints: {}", e));
     match options {
-        Options::Add { title, authors } => {
+        Options::Add {
+            url,
+            title,
+            authors,
+        } => {
             let transaction = connection
                 .transaction()
                 .unwrap_or_else(|e| die!("cannot create transaction: {}", e));
             {
-                let mut statement = transaction
-                    .prepare("INSERT INTO book (title) VALUES (?)")
-                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
-                statement
-                    .execute([&title])
-                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                if let Some(url) = url {
+                    let mut statement = transaction
+                        .prepare("INSERT INTO book (title, url) VALUES (?, ?)")
+                        .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
+                    statement
+                        .execute([&title, &url])
+                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                } else {
+                    let mut statement = transaction
+                        .prepare("INSERT INTO book (title) VALUES (?)")
+                        .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
+                    statement
+                        .execute([&title])
+                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                }
             }
             for author in authors {
                 let mut statement = transaction
