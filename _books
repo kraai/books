@@ -43,7 +43,7 @@ _books()
 		COMPREPLY=($(compgen -W 'add finish help ls mv set-url start' -- "$cur"))
 		;;
 	    ls)
-		COMPREPLY=($(compgen -W '-f -h -s --finished --help --started' -- "$cur"))
+		COMPREPLY=($(compgen -W '-f -h -s --finished --help --in-progress' -- "$cur"))
 		;;
 	esac
     fi

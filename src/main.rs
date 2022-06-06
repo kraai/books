@@ -46,9 +46,9 @@ enum Options {
         /// List finished books instead of unstarted ones
         #[clap(long)]
         finished: bool,
-        /// List started books instead of unstarted ones
+        /// List in-progress books instead of unstarted ones
         #[clap(long)]
-        started: bool,
+        in_progress: bool,
         /// List books with no URL
         #[clap(long)]
         without_url: bool,
@@ -162,13 +162,13 @@ fn main() {
         }
         Options::List {
             finished,
-            started,
+            in_progress,
             without_url,
         } => {
             Pager::new().setup();
             let statement = if finished {
                 "SELECT title FROM book WHERE end_date IS NOT NULL ORDER BY end_date"
-            } else if started {
+            } else if in_progress {
                 "SELECT title FROM book WHERE start_date IS NOT NULL AND end_date IS NULL ORDER BY title"
             } else if without_url {
                 "SELECT title FROM book WHERE url IS NULL ORDER BY title"
