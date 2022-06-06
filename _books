@@ -1,0 +1,51 @@
+# books completion                                         -*- shell-script -*-
+
+# Copyright 2022 Matthew James Kraai
+
+# This file is part of books.
+
+# books is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+
+# books is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General
+# Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public
+# License along with books.  If not, see
+# <https://www.gnu.org/licenses/>.
+
+_books()
+{
+    local cur prev words cword
+    _init_completion || return
+
+    if ((cword == 1)); then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=($(compgen -W '-h --help' -- "$cur"))
+        else
+            COMPREPLY=($(compgen -W 'add finish help ls mv set-url show start' -- "$cur"))
+        fi
+    else
+        local command=${words[1]}
+
+	case "${command}" in
+	    add)
+		COMPREPLY=($(compgen -W '-h --help --url' -- "$cur"))
+		;;
+	    finish|mv|set-url|start)
+		COMPREPLY=($(compgen -W '-h --help' -- "$cur"))
+		;;
+	    help)
+		COMPREPLY=($(compgen -W 'add finish help ls mv set-url start' -- "$cur"))
+		;;
+	    ls)
+		COMPREPLY=($(compgen -W '-f -h -s --finished --help --started' -- "$cur"))
+		;;
+	esac
+    fi
+} &&
+    complete -F _books books
