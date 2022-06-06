@@ -112,9 +112,9 @@ fn main() {
         .unwrap_or_else(|e| die!("cannot enable foreign key constraints: {}", e));
     match options {
         Options::Add {
-            url,
             title,
             authors,
+            url,
         } => {
             let transaction = connection
                 .transaction()
