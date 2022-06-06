@@ -19,7 +19,7 @@
 use clap::Parser;
 use directories::ProjectDirs;
 use pager::Pager;
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt, process};
 
 #[derive(Parser)]
@@ -68,6 +68,10 @@ enum Options {
         title: String,
         /// URL of the book
         url: String,
+    },
+    Show {
+        /// Title of the book
+        title: String,
     },
     /// Start reading a book
     Start {
@@ -209,6 +213,54 @@ fn main() {
                 != 1
             {
                 die!("not found: {}", title);
+            }
+        }
+        Options::Show { title } => {
+            Pager::new().setup();
+            if let Some((url, start_date, end_date)) = connection
+                .query_row(
+                    "SELECT url, start_date, end_date FROM book WHERE title = ?",
+                    [&title],
+                    |row| {
+                        row.get(0).and_then(|url: Option<String>| {
+                            row.get(1).and_then(|start_date: Option<String>| {
+                                row.get(2).and_then(|end_date: Option<String>| {
+                                    Ok((url, start_date, end_date))
+                                })
+                            })
+                        })
+                    },
+                )
+                .optional()
+                .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+            {
+                println!("Title: {}", title);
+                if let Some(url) = url {
+                    println!("URL: {}", url);
+                }
+                if let Some(start_date) = start_date {
+                    println!("Started: {}", start_date);
+                }
+                if let Some(end_date) = end_date {
+                    println!("Finished: {}", end_date);
+                }
+                let mut authors = Vec::new();
+                let mut statement = connection
+                    .prepare("SELECT author FROM author WHERE title = ?")
+                    .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
+                let mut rows = statement
+                    .query([&title])
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                while let Some(row) = rows
+                    .next()
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+                {
+                    let author: String = row
+                        .get(0)
+                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                    authors.push(author);
+                }
+                println!("Authors: {}", authors.join(", "));
             }
         }
         Options::Start { title } => {
