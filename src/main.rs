@@ -261,6 +261,8 @@ fn main() {
                     authors.push(author);
                 }
                 println!("Authors: {}", authors.join(", "));
+            } else {
+                die!("not found: {}", title);
             }
         }
         Options::Start { title } => {
