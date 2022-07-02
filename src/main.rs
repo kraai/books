@@ -173,7 +173,7 @@ fn main() {
             } else if without_url {
                 "SELECT title FROM book WHERE url IS NULL ORDER BY title"
             } else {
-                "SELECT title FROM book WHERE start_date IS NULL ORDER BY title"
+                "SELECT title FROM book WHERE start_date IS NULL AND end_date IS NULL ORDER BY title"
             };
             let mut statement = connection
                 .prepare(statement)
