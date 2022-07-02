@@ -175,12 +175,15 @@ fn main() {
             } else {
                 "SELECT title FROM book WHERE start_date IS NULL AND end_date IS NULL ORDER BY title"
             };
-            let mut statement = connection
+            let mut title_statement = connection
                 .prepare(statement)
                 .unwrap_or_else(|e| die!("cannot prepare statement \"{}\": {}", statement, e));
-            let mut rows = statement
+            let mut rows = title_statement
                 .query([])
                 .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+            let mut author_statement = connection
+                .prepare("SELECT author FROM author WHERE title = ?")
+                .unwrap_or_else(|e| die!("cannot prepare statement: {}", e));
             while let Some(row) = rows
                 .next()
                 .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
@@ -188,7 +191,26 @@ fn main() {
                 let title: String = row
                     .get(0)
                     .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
-                println!("{}", title);
+                let mut rows = author_statement
+                    .query([&title])
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                let mut authors = Vec::new();
+                while let Some(row) = rows
+                    .next()
+                    .unwrap_or_else(|e| die!("cannot execute statement: {}", e))
+                {
+                    let author: String = row
+                        .get(0)
+                        .unwrap_or_else(|e| die!("cannot execute statement: {}", e));
+                    authors.push(author);
+                }
+                let authors = match authors.len() {
+                    1 => authors[0].clone(),
+                    2 => format!("{} and {}", authors[0], authors[1]),
+                    3 => format!("{}, {}, and {}", authors[0], authors[1], authors[2]),
+                    _ => unimplemented!(),
+                };
+                println!("{} by {}", title, authors);
             }
         }
         Options::Rename {
