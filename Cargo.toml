@@ -23,6 +23,7 @@ edition = "2021"
 license = "AGPL-3.0-or-later"
 
 [dependencies]
+ansi_term = "0.12.1"
 clap = { version = "3", features = ["derive"] }
 directories = "4"
 pager = "0.16"

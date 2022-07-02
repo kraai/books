@@ -16,6 +16,7 @@
 // License along with books.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+use ansi_term::Style;
 use clap::Parser;
 use directories::ProjectDirs;
 use pager::Pager;
@@ -210,7 +211,7 @@ fn main() {
                     3 => format!("{}, {}, and {}", authors[0], authors[1], authors[2]),
                     _ => unimplemented!(),
                 };
-                println!("{} by {}", title, authors);
+                println!("{} by {}", Style::new().bold().paint(title), authors);
             }
         }
         Options::Rename {
